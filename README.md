@@ -61,4 +61,6 @@ Die Standardwerte (ungefähr 30 Atemzüge, drei Runden, 15 Sekunden Erholungsate
 
 Der Quellcode steht unter der MIT-Lizenz; Details stehen in [LICENSE](LICENSE). Garmin Connect IQ SDK und persönliche Entwicklerschlüssel gehören nicht zum Repository und müssen separat bezogen beziehungsweise erstellt werden.
 
+Details zur Speicherung der FIT-Aktivität stehen in [PRIVACY.md](PRIVACY.md).
+
 Dieses unabhängige Projekt wird weder von Garmin noch von der Wim-Hof-Organisation unterstützt oder herausgegeben.
