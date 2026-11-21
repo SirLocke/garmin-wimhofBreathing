@@ -1,4 +1,6 @@
 using Toybox.Graphics;
+using Toybox.Activity;
+using Toybox.ActivityRecording;
 using Toybox.Timer;
 using Toybox.WatchUi;
 
@@ -10,10 +12,17 @@ class WimHofView extends WatchUi.View {
     private const PHASE_PAUSED = 4;
     private const PHASE_COMPLETE = 5;
 
+    private const RECORDING_NONE = 0;
+    private const RECORDING_ACTIVE = 1;
+    private const RECORDING_SAVED = 2;
+    private const RECORDING_FAILED = 3;
+
     private const TOTAL_ROUNDS = 3;
     private const RECOVERY_SECONDS = 15;
 
     private var _timer;
+    private var _recordingSession;
+    private var _recordingStatus = RECORDING_NONE;
     private var _phase = PHASE_READY;
     private var _pausedPhase = PHASE_READY;
     private var _round = 1;
@@ -37,6 +46,8 @@ class WimHofView extends WatchUi.View {
         _round = 1;
         _holdSeconds = 0;
         _recoverySeconds = RECOVERY_SECONDS;
+        _recordingSession = null;
+        _recordingStatus = RECORDING_NONE;
     }
 
     function onUpdate(dc) {
@@ -44,7 +55,7 @@ class WimHofView extends WatchUi.View {
         dc.clear();
 
         if (_phase == PHASE_READY) {
-            drawLines(dc, ["Atemrunden", "Sitz oder leg dich hin", "Select: Start", "Nie in/nahe Wasser", "Nicht beim Fahren"]);
+            drawLines(dc, ["Atemrunden", "Sitz oder leg dich hin", "Select: Start", "Nie in/nahe Wasser", "Keine Dusche/Eisbad", "Nicht beim Fahren"]);
         } else if (_phase == PHASE_BREATHS) {
             drawLines(dc, ["Runde " + _round.toString() + "/" + TOTAL_ROUNDS.toString(), "Atemphase", "Ca. 30 Atemzüge", "Select: Weiter"]);
         } else if (_phase == PHASE_RETENTION) {
@@ -54,9 +65,10 @@ class WimHofView extends WatchUi.View {
         } else if (_phase == PHASE_PAUSED) {
             drawLines(dc, ["Pausiert", "Select: Weiter", "Back: Beenden", ""]);
         } else if (_phase == PHASE_COMPLETE) {
-            drawLines(dc, ["Fertig", "Gute Arbeit", "Select: Nochmal", "Back: Schließen"]);
+            var recordingMessage = recordingMessage();
+            drawLines(dc, ["Fertig", "Gute Arbeit", recordingMessage, "Select: Nochmal", "Back: Schließen"]);
         } else {
-            drawLines(dc, ["Atemrunden", "Sitz oder leg dich hin", "Select: Start", "Nie in/nahe Wasser", "Nicht beim Fahren"]);
+            drawLines(dc, ["Atemrunden", "Sitz oder leg dich hin", "Select: Start", "Nie in/nahe Wasser", "Keine Dusche/Eisbad", "Nicht beim Fahren"]);
         }
     }
 
@@ -76,6 +88,7 @@ class WimHofView extends WatchUi.View {
             // Keep the recovery hold timed so an accidental button press cannot skip it.
         } else if (_phase == PHASE_PAUSED) {
             _phase = _pausedPhase;
+            resumeRecording();
             if (_phase == PHASE_RETENTION || _phase == PHASE_RECOVERY) {
                 startTimer();
             }
@@ -91,11 +104,13 @@ class WimHofView extends WatchUi.View {
 
         if (_phase == PHASE_PAUSED) {
             stopTimer();
+            finishRecording();
             return false;
         } else {
             _pausedPhase = _phase;
             _phase = PHASE_PAUSED;
             stopTimer();
+            pauseRecording();
         }
         WatchUi.requestUpdate();
         return true;
@@ -106,6 +121,7 @@ class WimHofView extends WatchUi.View {
         _holdSeconds = 0;
         _recoverySeconds = RECOVERY_SECONDS;
         _phase = PHASE_BREATHS;
+        startRecording();
         stopTimer();
     }
 
@@ -115,6 +131,77 @@ class WimHofView extends WatchUi.View {
 
     private function stopTimer() {
         _timer.stop();
+    }
+
+    private function startRecording() {
+        _recordingSession = null;
+        _recordingStatus = RECORDING_FAILED;
+
+        if (!(Toybox has :ActivityRecording)) {
+            return;
+        }
+
+        var subSport = Activity.SUB_SPORT_GENERIC;
+        if (Activity has :SUB_SPORT_BREATHING) {
+            subSport = Activity.SUB_SPORT_BREATHING;
+        }
+
+        _recordingSession = ActivityRecording.createSession({
+            :name=>"Atemrunden",
+            :sport=>Activity.SPORT_TRAINING,
+            :subSport=>subSport
+        });
+
+        if (_recordingSession.start()) {
+            _recordingStatus = RECORDING_ACTIVE;
+        } else {
+            _recordingSession.discard();
+            _recordingSession = null;
+        }
+    }
+
+    private function pauseRecording() {
+        if (_recordingSession != null && _recordingSession.isRecording()) {
+            _recordingSession.stop();
+        }
+    }
+
+    private function resumeRecording() {
+        if (_recordingSession != null && !_recordingSession.isRecording()) {
+            if (_recordingSession.start()) {
+                _recordingStatus = RECORDING_ACTIVE;
+            } else {
+                _recordingSession.save();
+                _recordingSession = null;
+                _recordingStatus = RECORDING_FAILED;
+            }
+        }
+    }
+
+    private function finishRecording() {
+        if (_recordingSession == null) {
+            return;
+        }
+
+        if (_recordingSession.isRecording()) {
+            _recordingSession.stop();
+        }
+
+        if (_recordingSession.save()) {
+            _recordingStatus = RECORDING_SAVED;
+        } else {
+            _recordingStatus = RECORDING_FAILED;
+        }
+        _recordingSession = null;
+    }
+
+    private function recordingMessage() {
+        if (_recordingStatus == RECORDING_SAVED) {
+            return "Aktivität gespeichert";
+        } else if (_recordingStatus == RECORDING_FAILED) {
+            return "Aktivität nicht gespeichert";
+        }
+        return "";
     }
 
     function onTick() {
@@ -132,6 +219,7 @@ class WimHofView extends WatchUi.View {
     private function finishRecovery() {
         stopTimer();
         if (_round >= TOTAL_ROUNDS) {
+            finishRecording();
             _phase = PHASE_COMPLETE;
         } else {
             _round += 1;

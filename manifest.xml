@@ -8,7 +8,6 @@
         entry="WimHofApp"
         minApiLevel="3.2.0">
         <iq:products>
-            <iq:product id="round-watch" />
             <iq:product id="approachs50" />
             <iq:product id="approachs7042mm" />
             <iq:product id="approachs7047mm" />
@@ -116,7 +115,9 @@
             <iq:product id="vivoactive5" />
             <iq:product id="vivoactive6" />
         </iq:products>
-        <iq:permissions />
+        <iq:permissions>
+            <iq:uses-permission id="Fit" />
+        </iq:permissions>
         <iq:languages>
             <iq:language>deu</iq:language>
         </iq:languages>
