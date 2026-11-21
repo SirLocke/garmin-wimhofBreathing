@@ -20,7 +20,29 @@ Eine native Connect IQ Watch-App als einfacher Zähler und Timer für Wim-Hof-At
 - `manifest.xml`: Watch-App-Metadaten und Zielgeräte
 - `monkey.jungle`: Monkey-C-Projektpfade
 
-Zum Bauen wird das Garmin Connect IQ SDK mit der Monkey-C-Erweiterung für Visual Studio Code benötigt. Öffne dieses Verzeichnis als Projekt, wähle bei Bedarf unter **Monkey C: Edit Products** kompatible Zielgeräte aus und starte anschließend den Build oder Simulator über die Monkey-C-Erweiterung. Die aktuelle Manifest-Auswahl richtet sich an runde Garmin-Uhren.
+Zum Bauen werden das Garmin Connect IQ SDK und Java 11 oder neuer benötigt. Die Manifest-Auswahl enthält die aktuell im SDK 9.3.0 gelisteten runden Geräte ab API 3.2; neue Modelle lassen sich in Visual Studio Code über **Monkey C: Edit Products** ergänzen.
+
+Erzeuge einmalig einen privaten Signierschlüssel außerhalb des Repositories:
+
+```sh
+mkdir -p ~/.Garmin/ConnectIQ/keys
+openssl genrsa -out ~/.Garmin/ConnectIQ/keys/developer_key.pem 4096
+openssl pkcs8 -topk8 -inform PEM -outform DER \
+  -in ~/.Garmin/ConnectIQ/keys/developer_key.pem \
+  -out ~/.Garmin/ConnectIQ/keys/developer_key.der -nocrypt
+chmod 600 ~/.Garmin/ConnectIQ/keys/developer_key.*
+```
+
+Beispielbuild für eine runde Uhr (hier: fenix 9 Pro 47 mm):
+
+```sh
+mkdir -p build
+monkeyc -d fenix9pro47mm -f monkey.jungle \
+  -o build/atemrunden.prg \
+  -y ~/.Garmin/ConnectIQ/keys/developer_key.der
+```
+
+Bewahre denselben privaten Schlüssel sicher auf; er wird für Updates derselben Store-App benötigt. Schlüssel und Build-Ausgaben werden von Git ignoriert. Zum Starten im Simulator zuerst `connectiq` ausführen und danach `monkeydo build/atemrunden.prg fenix9pro47mm`.
 
 Die Standardwerte (30 Atemzüge, drei Runden, 15 Sekunden Erholungsatem) folgen dem Ablauf der [offiziellen Wim-Hof-Atemtechnik](https://www.wimhofmethod.com/breathing-exercises). Die Atemzüge selbst werden nicht getaktet: Die App zählt einen Atemzug pro Druck auf **Select**.
 

@@ -18,6 +18,21 @@ class WimHofView extends WatchUi.View {
     function initialize() {
         View.initialize();
         _timer = new Timer.Timer();
+        reset();
+    }
+
+    function reset() {
+        if (_timer == null) {
+            _timer = new Timer.Timer();
+        } else {
+            _timer.stop();
+        }
+        _phase = "ready";
+        _pausedPhase = "ready";
+        _round = 1;
+        _breaths = 0;
+        _holdSeconds = 0;
+        _recoverySeconds = RECOVERY_SECONDS;
     }
 
     function onUpdate(dc) {
@@ -34,8 +49,10 @@ class WimHofView extends WatchUi.View {
             drawLines(dc, ["Erholungsatem", "Einatmen, halten", remainingTime(), "Entspannt bleiben"]);
         } else if (_phase == "paused") {
             drawLines(dc, ["Pausiert", "Select: Weiter", "Back: Beenden", ""]);
-        } else {
+        } else if (_phase == "complete") {
             drawLines(dc, ["Fertig", "Gute Arbeit", "Select: Nochmal", "Back: Schließen"]);
+        } else {
+            drawLines(dc, ["Atemrunden", "Sitz oder leg dich hin", "Select: Start", "Nie in/nahe Wasser", "Nicht beim Fahren"]);
         }
     }
 
@@ -61,6 +78,8 @@ class WimHofView extends WatchUi.View {
             if (_phase == "retention" || _phase == "recovery") {
                 startTimer();
             }
+        } else {
+            startSession();
         }
 
         WatchUi.requestUpdate();
@@ -148,7 +167,7 @@ class WimHofView extends WatchUi.View {
         for (var i = 0; i < lines.size(); i += 1) {
             if (lines[i] != "") {
                 var font = i == 0 ? Graphics.FONT_SMALL : Graphics.FONT_TINY;
-                var y = lineCount == 1 ? height / 2 : height * (0.14 + (0.72 * i / (lineCount - 1)));
+                var y = lineCount == 1 ? height / 2 : height * (0.18 + (0.64 * i / (lineCount - 1)));
                 dc.drawText(width / 2, y, font, lines[i], Graphics.TEXT_JUSTIFY_CENTER);
             }
         }
