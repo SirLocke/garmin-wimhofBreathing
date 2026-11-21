@@ -1,7 +1,10 @@
 /bin/
 /build/
 *.prg
+*.prg.debug.xml
 *.iq
+developer_key
+developer_key.*
 *.der
 *.pem
 *.key
