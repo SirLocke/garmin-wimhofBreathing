@@ -3,13 +3,20 @@ using Toybox.Timer;
 using Toybox.WatchUi;
 
 class WimHofView extends WatchUi.View {
+    private const PHASE_READY = 0;
+    private const PHASE_BREATHS = 1;
+    private const PHASE_RETENTION = 2;
+    private const PHASE_RECOVERY = 3;
+    private const PHASE_PAUSED = 4;
+    private const PHASE_COMPLETE = 5;
+
     private const BREATHS_PER_ROUND = 30;
     private const TOTAL_ROUNDS = 3;
     private const RECOVERY_SECONDS = 15;
 
     private var _timer;
-    private var _phase = "ready";
-    private var _pausedPhase = "ready";
+    private var _phase = PHASE_READY;
+    private var _pausedPhase = PHASE_READY;
     private var _round = 1;
     private var _breaths = 0;
     private var _holdSeconds = 0;
@@ -27,8 +34,8 @@ class WimHofView extends WatchUi.View {
         } else {
             _timer.stop();
         }
-        _phase = "ready";
-        _pausedPhase = "ready";
+        _phase = PHASE_READY;
+        _pausedPhase = PHASE_READY;
         _round = 1;
         _breaths = 0;
         _holdSeconds = 0;
@@ -39,17 +46,17 @@ class WimHofView extends WatchUi.View {
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_BLACK);
         dc.clear();
 
-        if (_phase == "ready") {
+        if (_phase == PHASE_READY) {
             drawLines(dc, ["Atemrunden", "Sitz oder leg dich hin", "Select: Start", "Nie in/nahe Wasser", "Nicht beim Fahren"]);
-        } else if (_phase == "breaths") {
-            drawLines(dc, ["Runde " + _round.toString() + "/" + TOTAL_ROUNDS.toString(), "Atemzüge", _breaths.toString() + "/" + BREATHS_PER_ROUND.toString(), "Select pro Atemzug"]);
-        } else if (_phase == "retention") {
-            drawLines(dc, ["Runde " + _round.toString() + "/" + TOTAL_ROUNDS.toString(), "Ausatmen, halten", elapsedTime(), "Select bei Atemdrang"]);
-        } else if (_phase == "recovery") {
+        } else if (_phase == PHASE_BREATHS) {
+            drawLines(dc, ["Runde " + _round.toString() + "/" + TOTAL_ROUNDS.toString(), "Atemzüge", _breaths.toString() + "/" + BREATHS_PER_ROUND.toString(), "Select: Atemzug"]);
+        } else if (_phase == PHASE_RETENTION) {
+            drawLines(dc, ["Ausatmen, halten", elapsedTime(), "Select bei Drang"]);
+        } else if (_phase == PHASE_RECOVERY) {
             drawLines(dc, ["Erholungsatem", "Einatmen, halten", remainingTime(), "Entspannt bleiben"]);
-        } else if (_phase == "paused") {
+        } else if (_phase == PHASE_PAUSED) {
             drawLines(dc, ["Pausiert", "Select: Weiter", "Back: Beenden", ""]);
-        } else if (_phase == "complete") {
+        } else if (_phase == PHASE_COMPLETE) {
             drawLines(dc, ["Fertig", "Gute Arbeit", "Select: Nochmal", "Back: Schließen"]);
         } else {
             drawLines(dc, ["Atemrunden", "Sitz oder leg dich hin", "Select: Start", "Nie in/nahe Wasser", "Nicht beim Fahren"]);
@@ -57,45 +64,43 @@ class WimHofView extends WatchUi.View {
     }
 
     function advance() {
-        if (_phase == "ready" || _phase == "complete") {
+        if (_phase == PHASE_READY || _phase == PHASE_COMPLETE) {
             startSession();
-        } else if (_phase == "breaths") {
+        } else if (_phase == PHASE_BREATHS) {
             _breaths += 1;
             if (_breaths >= BREATHS_PER_ROUND) {
-                _phase = "retention";
+                _phase = PHASE_RETENTION;
                 _holdSeconds = 0;
                 startTimer();
             }
-        } else if (_phase == "retention") {
-            _phase = "recovery";
+        } else if (_phase == PHASE_RETENTION) {
+            _phase = PHASE_RECOVERY;
             _recoverySeconds = RECOVERY_SECONDS;
             stopTimer();
             startTimer();
-        } else if (_phase == "recovery") {
+        } else if (_phase == PHASE_RECOVERY) {
             // Keep the recovery hold timed so an accidental button press cannot skip it.
-        } else if (_phase == "paused") {
+        } else if (_phase == PHASE_PAUSED) {
             _phase = _pausedPhase;
-            if (_phase == "retention" || _phase == "recovery") {
+            if (_phase == PHASE_RETENTION || _phase == PHASE_RECOVERY) {
                 startTimer();
             }
-        } else {
-            startSession();
         }
 
         WatchUi.requestUpdate();
     }
 
     function back() {
-        if (_phase == "ready" || _phase == "complete") {
+        if (_phase == PHASE_READY || _phase == PHASE_COMPLETE) {
             return false;
         }
 
-        if (_phase == "paused") {
+        if (_phase == PHASE_PAUSED) {
             stopTimer();
             return false;
         } else {
             _pausedPhase = _phase;
-            _phase = "paused";
+            _phase = PHASE_PAUSED;
             stopTimer();
         }
         WatchUi.requestUpdate();
@@ -107,7 +112,7 @@ class WimHofView extends WatchUi.View {
         _breaths = 0;
         _holdSeconds = 0;
         _recoverySeconds = RECOVERY_SECONDS;
-        _phase = "breaths";
+        _phase = PHASE_BREATHS;
         stopTimer();
     }
 
@@ -119,10 +124,10 @@ class WimHofView extends WatchUi.View {
         _timer.stop();
     }
 
-    private function onTick() {
-        if (_phase == "retention") {
+    function onTick() {
+        if (_phase == PHASE_RETENTION) {
             _holdSeconds += 1;
-        } else if (_phase == "recovery") {
+        } else if (_phase == PHASE_RECOVERY) {
             _recoverySeconds -= 1;
             if (_recoverySeconds <= 0) {
                 finishRecovery();
@@ -134,11 +139,11 @@ class WimHofView extends WatchUi.View {
     private function finishRecovery() {
         stopTimer();
         if (_round >= TOTAL_ROUNDS) {
-            _phase = "complete";
+            _phase = PHASE_COMPLETE;
         } else {
             _round += 1;
             _breaths = 0;
-            _phase = "breaths";
+            _phase = PHASE_BREATHS;
         }
     }
 
@@ -167,7 +172,7 @@ class WimHofView extends WatchUi.View {
         for (var i = 0; i < lines.size(); i += 1) {
             if (lines[i] != "") {
                 var font = i == 0 ? Graphics.FONT_SMALL : Graphics.FONT_TINY;
-                var y = lineCount == 1 ? height / 2 : height * (0.18 + (0.64 * i / (lineCount - 1)));
+                var y = lineCount == 1 ? height / 2 : height * (0.20 + (0.55 * i / (lineCount - 1)));
                 dc.drawText(width / 2, y, font, lines[i], Graphics.TEXT_JUSTIFY_CENTER);
             }
         }
