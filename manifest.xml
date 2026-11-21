@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<iq:manifest xmlns:iq="http://www.garmin.com/xml/connectiq" version="3">
+    <iq:application
+        id="c28ad33e-0ee0-4c0d-86d6-4f0dd278429b"
+        type="watch-app"
+        name="@Strings.AppName"
+        entry="WimHofApp"
+        minApiLevel="3.2.0">
+        <iq:products>
+            <iq:product id="round-watch" />
+        </iq:products>
+        <iq:permissions />
+        <iq:languages>
+            <iq:language>deu</iq:language>
+        </iq:languages>
+    </iq:application>
+</iq:manifest>
