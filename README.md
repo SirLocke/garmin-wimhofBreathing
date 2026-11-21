@@ -1,11 +1,11 @@
 # Garmin Atemrunden
 
-Eine native Connect IQ Watch-App als einfacher Zähler und Timer für Wim-Hof-Atemrunden. Sie führt durch drei Runden mit jeweils 30 manuell gezählten Atemzügen, einer manuell beendeten Atemhaltephase und einem 15-sekündigen Erholungsatem.
+Eine native Connect IQ Watch-App als einfacher Phasen-Timer für Wim-Hof-Atemrunden. Sie führt durch drei Runden mit jeweils ungefähr 30 Atemzügen, einer manuell beendeten Atemhaltephase und einem 15-sekündigen Erholungsatem. Die Atemzüge werden nicht automatisch erkannt.
 
 ## Bedienung
 
-- **Select** startet die Sitzung und zählt während der Atemphase jeweils einen vollständigen Atemzug.
-- Nach dem 30. Atemzug beginnt die Atemhaltephase. Halte nach dem Ausatmen und drücke **Select** erst, wenn du wieder atmen möchtest. Die App setzt kein Zeitlimit.
+- **Select** startet die Sitzung. Atme in jeder Atemphase ungefähr 30-mal, ohne dabei Knöpfe zu drücken. Drücke **Select** einmal nach dem letzten Ausatmen, um die Haltephase zu starten.
+- Halte nach dem Ausatmen und drücke **Select** erst, wenn du wieder atmen möchtest. Die App setzt kein Zeitlimit.
 - Der Erholungsatem läuft 15 Sekunden und geht danach automatisch in die nächste Runde.
 - **Back** pausiert. **Select** setzt fort; **Back** während der Pause beendet die App.
 - Nach Runde drei zeigt die App den Abschluss. **Select** startet eine neue Sitzung.
@@ -44,7 +44,7 @@ monkeyc -d fenix9pro47mm -f monkey.jungle \
 
 Bewahre denselben privaten Schlüssel sicher auf; er wird für Updates derselben Store-App benötigt. Schlüssel und Build-Ausgaben werden von Git ignoriert. Zum Starten im Simulator zuerst `connectiq` ausführen und danach `monkeydo build/atemrunden.prg fenix9pro47mm`.
 
-Die Standardwerte (30 Atemzüge, drei Runden, 15 Sekunden Erholungsatem) folgen dem Ablauf der [offiziellen Wim-Hof-Atemtechnik](https://www.wimhofmethod.com/breathing-exercises). Die Atemzüge selbst werden nicht getaktet: Die App zählt einen Atemzug pro Druck auf **Select**.
+Die Standardwerte (ungefähr 30 Atemzüge, drei Runden, 15 Sekunden Erholungsatem) folgen dem Ablauf der [offiziellen Wim-Hof-Atemtechnik](https://www.wimhofmethod.com/breathing-exercises). Die App erkennt keine einzelnen Atemzüge; **Select** markiert nur den Übergang zur Haltephase.
 
 ## Lizenz
 

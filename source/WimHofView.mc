@@ -10,7 +10,6 @@ class WimHofView extends WatchUi.View {
     private const PHASE_PAUSED = 4;
     private const PHASE_COMPLETE = 5;
 
-    private const BREATHS_PER_ROUND = 30;
     private const TOTAL_ROUNDS = 3;
     private const RECOVERY_SECONDS = 15;
 
@@ -18,7 +17,6 @@ class WimHofView extends WatchUi.View {
     private var _phase = PHASE_READY;
     private var _pausedPhase = PHASE_READY;
     private var _round = 1;
-    private var _breaths = 0;
     private var _holdSeconds = 0;
     private var _recoverySeconds = RECOVERY_SECONDS;
 
@@ -37,7 +35,6 @@ class WimHofView extends WatchUi.View {
         _phase = PHASE_READY;
         _pausedPhase = PHASE_READY;
         _round = 1;
-        _breaths = 0;
         _holdSeconds = 0;
         _recoverySeconds = RECOVERY_SECONDS;
     }
@@ -49,7 +46,7 @@ class WimHofView extends WatchUi.View {
         if (_phase == PHASE_READY) {
             drawLines(dc, ["Atemrunden", "Sitz oder leg dich hin", "Select: Start", "Nie in/nahe Wasser", "Nicht beim Fahren"]);
         } else if (_phase == PHASE_BREATHS) {
-            drawLines(dc, ["Runde " + _round.toString() + "/" + TOTAL_ROUNDS.toString(), "Atemzüge", _breaths.toString() + "/" + BREATHS_PER_ROUND.toString(), "Select: Atemzug"]);
+            drawLines(dc, ["Runde " + _round.toString() + "/" + TOTAL_ROUNDS.toString(), "Atemphase", "Ca. 30 Atemzüge", "Select: Weiter"]);
         } else if (_phase == PHASE_RETENTION) {
             drawLines(dc, ["Ausatmen, halten", elapsedTime(), "Select bei Drang"]);
         } else if (_phase == PHASE_RECOVERY) {
@@ -67,12 +64,9 @@ class WimHofView extends WatchUi.View {
         if (_phase == PHASE_READY || _phase == PHASE_COMPLETE) {
             startSession();
         } else if (_phase == PHASE_BREATHS) {
-            _breaths += 1;
-            if (_breaths >= BREATHS_PER_ROUND) {
-                _phase = PHASE_RETENTION;
-                _holdSeconds = 0;
-                startTimer();
-            }
+            _phase = PHASE_RETENTION;
+            _holdSeconds = 0;
+            startTimer();
         } else if (_phase == PHASE_RETENTION) {
             _phase = PHASE_RECOVERY;
             _recoverySeconds = RECOVERY_SECONDS;
@@ -109,7 +103,6 @@ class WimHofView extends WatchUi.View {
 
     private function startSession() {
         _round = 1;
-        _breaths = 0;
         _holdSeconds = 0;
         _recoverySeconds = RECOVERY_SECONDS;
         _phase = PHASE_BREATHS;
@@ -142,7 +135,6 @@ class WimHofView extends WatchUi.View {
             _phase = PHASE_COMPLETE;
         } else {
             _round += 1;
-            _breaths = 0;
             _phase = PHASE_BREATHS;
         }
     }
